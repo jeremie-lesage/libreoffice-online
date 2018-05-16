@@ -38,7 +38,7 @@ RUN apt-get update -y \
 			python-polib nodejs-legacy node-jake libghc-zlib-bindings-dev \
 			libghc-zlib-dev git pkg-config libcppunit-dev libpam0g-dev python-lxml \
 			libexpat1-dev default-libmysqlclient-dev libpcre3-dev libsqlite3-dev \
-			libssl-dev
+			libssl-dev devscripts
 
 COPY --from=poco /opt/libpoco/*.deb /opt/libpoco/
 RUN dpkg -i /opt/libpoco/*.deb \
