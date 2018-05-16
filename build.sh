@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 VERSION=$(egrep -o '([0-9.-]+)' /opt/online/debian/changelog | head -1)
 cd /opt/online
 ./autogen.sh
