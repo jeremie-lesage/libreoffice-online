@@ -21,7 +21,9 @@ git checkout 3.2.0-4
 3. lunch the builder with docker
 
 ``` bash
-docker run --rm -it -v "$PWD:/opt/online" jeci/loolbuilder
+export CONFIG_OPTIONS="--disable-dependency-tracking --disable-test"
+
+docker run --rm -it -e CONFIG_OPTIONS -v "$PWD:/opt/online" jeci/loolbuilder
 ```
 
 This will build lool in your directory and procude 2 debian packages :
