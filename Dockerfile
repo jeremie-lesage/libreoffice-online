@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu as builder
 
 # get the latest fixes
 RUN apt-get update && apt-get upgrade -y
@@ -15,7 +15,8 @@ RUN apt-get install -y \
 RUN echo "deb https://collaboraoffice.com/repos/Poco/ /" >> /etc/apt/sources.list.d/poco.list \
 	&& apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 0C54D189F4BA284D \
 	&& apt-get update \
-	&& apt-get -y install libpoco-dev
+	&& apt-get -y install libpoco-dev \
+	&& apt-get auto-remove -y
 
 WORKDIR /opt/npm
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - \
@@ -24,10 +25,74 @@ RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - \
 			browserify-css d3 popper.js \
 		&& npm install -g jake
 
+RUN apt-get install -y wget
+RUN apt-get auto-remove -y
+
+ARG ONLINE_BRANCH
+
 WORKDIR /opt
-ADD build.sh /opt
 
-CMD /opt/build.sh
+RUN git clone --depth 1 --branch $ONLINE_BRANCH \
+	https://anongit.freedesktop.org/git/libreoffice/online.git online
 
-RUN useradd -ms /bin/bash lool \
-	&& chown lool:lool -R /opt
+RUN pwd
+
+WORKDIR /opt/online/loleaflet/po
+RUN ls /opt/online && /opt/online/scripts/downloadpootle.sh
+
+WORKDIR /opt/online
+ENV INSTDIR="/opt/online/instdir/" \
+		CONFIG_OPTIONS="--enable-silent-rules --prefix=/usr --localstatedir=/var --sysconfdir=/etc --with-lokit-path=/opt/online/bundled/include"
+#--with-lokit-path="$BUILDDIR"/libreoffice/include
+#--with-lo-path="$INSTDIR"/opt/libreoffice
+
+ADD httpwstest_bug_poco.patch /opt/online/
+
+RUN patch -p1 < httpwstest_bug_poco.patch
+
+RUN ./autogen.sh \
+		&& ./configure $CONFIG_OPTIONS \
+		&& make -j 8 \
+		&& DESTDIR="$INSTDIR" make install
+
+
+## FINAL STAGE ##
+FROM ubuntu
+
+# get the latest fixes
+RUN apt-get update && apt-get upgrade -y
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get install -y libreoffice.
+
+RUN apt-get install -y \
+			apt-transport-https cpio locales-all
+
+# set up 3rd party repo of Poco, dependency of loolwsd
+RUN  echo "deb https://collaboraoffice.com/repos/Poco/ /" >> /etc/apt/sources.list.d/poco.list \
+	&& apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0C54D189F4BA284D \
+	&& apt-get update \
+	&& apt-get install -y libpoco*60
+
+# copy freshly built LibreOffice master and LibreOffice Online master with latest translations
+COPY --from=builder /opt/online/instdir/ /
+
+# copy the shell script which can start LibreOffice Online (loolwsd)
+COPY --from=builder /opt/online/docker/scripts/run-lool.sh /
+
+# set up LibreOffice Online (normally done by postinstall script of package)
+RUN  setcap cap_fowner,cap_mknod,cap_sys_chroot=ep /usr/bin/loolforkit \
+	&& adduser --quiet --system --group --home /opt/lool lool \
+	&& mkdir -p /var/cache/loolwsd \
+	&& chown lool: /var/cache/loolwsd \
+	&& rm -rf /var/cache/loolwsd/* \
+	&& rm -rf /opt/lool \
+	&& mkdir -p /opt/lool/child-roots \
+	&& chown -R lool: /opt/lool \
+	&& su lool --shell=/bin/sh \
+			-c "loolwsd-systemplate-setup /opt/lool/systemplate /usr/share/libreoffice/ " \
+	&& touch /var/log/loolwsd.log \
+	&& chown lool /var/log/loolwsd.log
+
+CMD bash /run-lool.sh
