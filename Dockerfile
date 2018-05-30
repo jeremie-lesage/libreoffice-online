@@ -64,10 +64,10 @@ RUN apt-get update && apt-get upgrade -y
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get install -y libreoffice.
+RUN apt-get install -y libreoffice
 
 RUN apt-get install -y \
-			apt-transport-https cpio locales-all
+			apt-transport-https cpio locales-all ghostscript
 
 # set up 3rd party repo of Poco, dependency of loolwsd
 RUN  echo "deb https://collaboraoffice.com/repos/Poco/ /" >> /etc/apt/sources.list.d/poco.list \
@@ -77,9 +77,10 @@ RUN  echo "deb https://collaboraoffice.com/repos/Poco/ /" >> /etc/apt/sources.li
 
 # copy freshly built LibreOffice master and LibreOffice Online master with latest translations
 COPY --from=builder /opt/online/instdir/ /
+COPY --from=builder /opt/online/instdir/ /opt/lool/systemplate/
 
 # copy the shell script which can start LibreOffice Online (loolwsd)
-COPY --from=builder /opt/online/docker/scripts/run-lool.sh /
+ADD run-lool.sh /
 
 # set up LibreOffice Online (normally done by postinstall script of package)
 RUN  setcap cap_fowner,cap_mknod,cap_sys_chroot=ep /usr/bin/loolforkit \
@@ -91,8 +92,10 @@ RUN  setcap cap_fowner,cap_mknod,cap_sys_chroot=ep /usr/bin/loolforkit \
 	&& mkdir -p /opt/lool/child-roots \
 	&& chown -R lool: /opt/lool \
 	&& su lool --shell=/bin/sh \
-			-c "loolwsd-systemplate-setup /opt/lool/systemplate /usr/share/libreoffice/ " \
+			-c "loolwsd-systemplate-setup /opt/lool/systemplate /usr/lib/libreoffice " \
 	&& touch /var/log/loolwsd.log \
 	&& chown lool /var/log/loolwsd.log
 
 CMD bash /run-lool.sh
+
+EXPOSE 9980
