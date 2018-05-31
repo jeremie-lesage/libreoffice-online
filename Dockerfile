@@ -65,7 +65,7 @@ RUN apt-get update && apt-get upgrade -y
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get install -y libreoffice
+#RUN apt-get install -y libreoffice
 
 RUN apt-get install -y apt-transport-https cpio locales-all gnupg ca-certificates curl
 
@@ -76,9 +76,28 @@ RUN set -e \
 	&& apt-get update \
 	&& apt-get install -y libpoco*60
 
+
+RUN set -xe \
+	&& curl http://ftp.free.fr/mirrors/documentfoundation.org/libreoffice/testing/6.1.0/deb/x86_64/LibreOfficeDev_6.1.0.0.beta1_Linux_x86-64_deb.tar.gz -o /opt/LibreOffice_deb.tar.gz \
+	&& tar xzf /opt/LibreOffice_deb.tar.gz -C /opt \
+	&& dpkg -i /opt/LibreOfficeDev_*/DEBS/* \
+	&& rm -rf /opt/LibreOfficeDevDev_*
+
+
+RUN set -e \
+	&& apt-get install -y libcap2-bin libdbus-glib-1-2 libx11-6 libcairo2 libsm6 \
+		adduser fontconfig libxinerama1 libxrender1 libgl1-mesa-glx libcups2 cpio \
+		libcap2-bin libxcb-render0 libxcb-shm0 libpam0g libpng12-0 libpococrypto60 \
+		ghostscript libssl1.0.0
+
 # copy freshly built LibreOffice master and LibreOffice Online master with latest translations
 COPY --from=builder /opt/online/instdir/ /
 COPY --from=builder /opt/online/instdir/ /opt/lool/systemplate/
+
+#RUN curl http://ftp.free.fr/mirrors/documentfoundation.org/libreoffice/stable/5.4.7/deb/x86_64/LibreOffice_5.4.7_Linux_x86-64_deb_sdk.tar.gz -o /opt/LibreOffice_deb_sdk.tar.gz \
+#	&& tar xzf /opt/LibreOffice_deb_sdk.tar.gz -C /opt \
+#	&& dpkg -i /opt/LibreOffice_*_Linux_x86-64_deb_sdk/DEBS/* \
+#	&& rm -rf /opt/LibreOffice_deb_sdk.tar.gz /opt/LibreOffice_*_Linux_x86-64_deb_sdk
 
 
 # set up LibreOffice Online (normally done by postinstall script of package)
@@ -92,10 +111,14 @@ RUN set -e \
 	&& mkdir -p /opt/lool/child-roots \
 	&& chown -R lool: /opt/lool \
 	&& su lool --shell=/bin/sh \
-			-c "loolwsd-systemplate-setup /opt/lool/systemplate /usr/lib/libreoffice " \
+			-c "loolwsd-systemplate-setup /opt/lool/systemplate /opt/libreofficedev6.1 " \
 	&& touch /var/log/loolwsd.log \
 	&& chown lool /var/log/loolwsd.log
 
+
+
+# copy the shell script which can start LibreOffice Online (loolwsd)
+ADD run-lool.sh /
 CMD bash /run-lool.sh
 
 EXPOSE 9980
