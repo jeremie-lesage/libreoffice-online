@@ -1,4 +1,4 @@
-FROM ubuntu as builder
+FROM ubuntu:xenial as builder
 
 # get the latest fixes
 RUN apt-get update && apt-get upgrade -y
@@ -8,11 +8,12 @@ RUN apt-get install -y \
 			debhelper dh-systemd build-essential unixodbc-dev \
 			python-polib nodejs node-jake libghc-zlib-bindings-dev \
 			libghc-zlib-dev git pkg-config libcppunit-dev libpam0g-dev python-lxml \
-			libexpat1-dev default-libmysqlclient-dev libpcre3-dev libsqlite3-dev \
-			libssl-dev devscripts libssl1.1 libcap2-bin fontconfig
+			libexpat1-dev libpcre3-dev libsqlite3-dev \
+			libssl-dev devscripts libssl1.0.0 libcap2-bin fontconfig
 
 # set up 3rd party repo of Poco, dependency of loolwsd
 RUN echo "deb https://collaboraoffice.com/repos/Poco/ /" >> /etc/apt/sources.list.d/poco.list \
+	&& apt-get install -y apt-transport-https \
 	&& apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 0C54D189F4BA284D \
 	&& apt-get update \
 	&& apt-get -y install libpoco-dev \
@@ -57,7 +58,7 @@ RUN ./autogen.sh \
 
 
 ## FINAL STAGE ##
-FROM ubuntu
+FROM ubuntu:xenial
 
 # get the latest fixes
 RUN apt-get update && apt-get upgrade -y
@@ -66,11 +67,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get install -y libreoffice
 
-RUN apt-get install -y \
-			apt-transport-https cpio locales-all ghostscript
+RUN apt-get install -y apt-transport-https cpio locales-all gnupg ca-certificates curl
 
 # set up 3rd party repo of Poco, dependency of loolwsd
-RUN  echo "deb https://collaboraoffice.com/repos/Poco/ /" >> /etc/apt/sources.list.d/poco.list \
+RUN set -e \
+	&& echo "deb https://collaboraoffice.com/repos/Poco/ /" >> /etc/apt/sources.list.d/poco.list \
 	&& apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0C54D189F4BA284D \
 	&& apt-get update \
 	&& apt-get install -y libpoco*60
@@ -79,11 +80,10 @@ RUN  echo "deb https://collaboraoffice.com/repos/Poco/ /" >> /etc/apt/sources.li
 COPY --from=builder /opt/online/instdir/ /
 COPY --from=builder /opt/online/instdir/ /opt/lool/systemplate/
 
-# copy the shell script which can start LibreOffice Online (loolwsd)
-ADD run-lool.sh /
 
 # set up LibreOffice Online (normally done by postinstall script of package)
-RUN  setcap cap_fowner,cap_mknod,cap_sys_chroot=ep /usr/bin/loolforkit \
+RUN set -e \
+	&& setcap cap_fowner,cap_mknod,cap_sys_chroot+iep /usr/bin/loolforkit \
 	&& adduser --quiet --system --group --home /opt/lool lool \
 	&& mkdir -p /var/cache/loolwsd \
 	&& chown lool: /var/cache/loolwsd \
