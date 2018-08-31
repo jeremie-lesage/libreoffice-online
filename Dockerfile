@@ -1,3 +1,6 @@
+##################
+## BUILD STAGE ##
+################
 FROM ubuntu:xenial as builder
 
 # get the latest fixes
@@ -22,12 +25,10 @@ RUN echo "deb https://collaboraoffice.com/repos/Poco/ /" >> /etc/apt/sources.lis
 WORKDIR /opt/npm
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - \
 		&& apt-get install -y nodejs \
+		&& npm i npm@latest -g \
 		&& npm install uglify-js exorcist evol-colorpicker bootstrap eslint \
 			browserify-css d3 popper.js \
 		&& npm install -g jake
-
-RUN apt-get install -y wget
-RUN apt-get auto-remove -y
 
 ARG ONLINE_BRANCH
 
@@ -36,10 +37,8 @@ WORKDIR /opt
 RUN git clone --depth 1 --branch $ONLINE_BRANCH \
 	https://anongit.freedesktop.org/git/libreoffice/online.git online
 
-RUN pwd
-
 WORKDIR /opt/online/loleaflet/po
-RUN ls /opt/online && /opt/online/scripts/downloadpootle.sh
+RUN apt-get install -y wget && /opt/online/scripts/downloadpootle.sh
 
 WORKDIR /opt/online
 ENV INSTDIR="/opt/online/instdir/" \
@@ -47,17 +46,24 @@ ENV INSTDIR="/opt/online/instdir/" \
 #--with-lokit-path="$BUILDDIR"/libreoffice/include
 #--with-lo-path="$INSTDIR"/opt/libreoffice
 
-ADD httpwstest_bug_poco.patch /opt/online/
-
-RUN patch -p1 < httpwstest_bug_poco.patch
-
-RUN ./autogen.sh \
-		&& ./configure $CONFIG_OPTIONS \
-		&& make -j 8 \
-		&& DESTDIR="$INSTDIR" make install
+ADD patch.sh /opt/online/
+ADD patches/ /opt/online/patches/
 
 
-## FINAL STAGE ##
+RUN  set -e \
+	&& apt-get install -y sudo \
+	&& ./autogen.sh \
+	&& ./configure $CONFIG_OPTIONS
+
+RUN  set -e \
+	&& ./patch.sh \
+	&& make -j $(expr $(lscpu -p=CPU|tail -1) + 1) \
+	&& DESTDIR="$INSTDIR" make install
+
+
+##################
+##  RUN STAGE  ##
+################
 FROM ubuntu:xenial
 
 # get the latest fixes
@@ -76,13 +82,14 @@ RUN set -e \
 	&& apt-get update \
 	&& apt-get install -y libpoco*60
 
+ENV LIBO_DEV_VERSION=6.1.1.1
 
 RUN set -xe \
-	&& curl http://ftp.free.fr/mirrors/documentfoundation.org/libreoffice/testing/6.1.0/deb/x86_64/LibreOfficeDev_6.1.0.0.beta1_Linux_x86-64_deb.tar.gz -o /opt/LibreOffice_deb.tar.gz \
+	&& curl http://ftp.free.fr/mirrors/documentfoundation.org/libreoffice/testing/6.1.1/deb/x86_64/LibreOffice_${LIBO_DEV_VERSION}_Linux_x86-64_deb.tar.gz \
+		-o /opt/LibreOffice_deb.tar.gz \
 	&& tar xzf /opt/LibreOffice_deb.tar.gz -C /opt \
-	&& dpkg -i /opt/LibreOfficeDev_*/DEBS/* \
-	&& rm -rf /opt/LibreOfficeDevDev_*
-
+	&& dpkg -i /opt/LibreOffice_*/DEBS/* \
+	&& rm -rf /opt/LibreOffice_* /opt/LibreOffice_deb.tar.gz
 
 RUN set -e \
 	&& apt-get install -y libcap2-bin libdbus-glib-1-2 libx11-6 libcairo2 libsm6 \
@@ -111,7 +118,7 @@ RUN set -e \
 	&& mkdir -p /opt/lool/child-roots \
 	&& chown -R lool: /opt/lool \
 	&& su lool --shell=/bin/sh \
-			-c "loolwsd-systemplate-setup /opt/lool/systemplate /opt/libreofficedev6.1 " \
+			-c "loolwsd-systemplate-setup /opt/lool/systemplate /opt/libreoffice6.1 " \
 	&& touch /var/log/loolwsd.log \
 	&& chown lool /var/log/loolwsd.log
 

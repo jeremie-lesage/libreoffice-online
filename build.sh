@@ -1,13 +1,16 @@
 #!/bin/bash -xe
-VERSION=$(egrep -o '([0-9.-]+)' /opt/online/debian/changelog | head -1)
-cd /opt/online
+export VERSION=$(egrep -o '([0-9.-]+)' /opt/online/debian/changelog | head -1)
+
+CONFIG_OPTIONS="--enable-silent-rules --prefix=/usr --localstatedir=/var --sysconfdir=/etc"
+CONFIG_OPTIONS="${CONFIG_OPTIONS} --with-lokit-path=/opt/online/bundled/include"
+#--with-lokit-path="$BUILDDIR"/libreoffice/include
+#--with-lo-path="$INSTDIR"/opt/libreoffice
+
+
 ./autogen.sh
+./configure $CONFIG_OPTIONS
+( cd loleaflet/po && ../../scripts/downloadpootle.sh )
 
-cd /opt
-tar cf loolwsd_${VERSION%-*}.orig.tar online/
-gzip -1 loolwsd_${VERSION%-*}.orig.tar
+make
 
-cd /opt/online
-dpkg-buildpackage -us -uc -b -j4
-
-cp ../*deb .
+DESTDIR="$INSTDIR" make install
