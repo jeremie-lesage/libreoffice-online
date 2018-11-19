@@ -63,26 +63,21 @@ RUN apt-get install -y \
 			pkg-config \
 			python-polib \
 			python-lxml \
-			nodejs \
 			node-jake \
 			libcap-dev \
 			libcap2-bin \
 			libcppunit-dev \
-			libexpat1-dev \
 			libghc-zlib-bindings-dev \
 			libghc-zlib-dev \
 			libpam0g-dev \
-			libpcre3-dev \
 			libpng-dev \
-			libsqlite3-dev \
-			libssl-dev \
 			libtool \
 			unixodbc-dev \
 			fontconfig
 
 ## 5. git clone lool
 WORKDIR /opt
-RUN git clone --depth 1 --branch $ONLINE_BRANCH ${LOOL_GIT_REP} online
+RUN git clone --depth 1 --branch ${ONLINE_BRANCH} ${LOOL_GIT_REP} online
 
 ## 6. Install PO files
 WORKDIR /opt/online/loleaflet/po
