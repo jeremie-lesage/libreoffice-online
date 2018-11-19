@@ -16,7 +16,7 @@ FROM ubuntu as builder
 ENV LOOL_GIT_REP=https://anongit.freedesktop.org/git/libreoffice/online.git \
 		POCO_DEBIAN_REP=https://collaboraoffice.com/repos/Poco/ \
 		NODEJS_SETUP_URL=https://deb.nodesource.com/setup_8.x \
-		ONLINE_BRANCH=libreoffice-6-1
+		ONLINE_BRANCH=libreoffice-6.1.3.2
 
 ## 1. update xenial
 RUN apt-get update \
@@ -185,6 +185,8 @@ RUN set -e \
 
 ## 7. copy the shell script which can start LibreOffice Online (loolwsd)
 ADD run-lool.sh /
+RUN sed -i "s,lo_template_path=.*,lo_template_path=/opt/libreoffice${LO_MAJOR} \"," /run-lool.sh
+
 CMD bash /run-lool.sh
 
 EXPOSE 9980
