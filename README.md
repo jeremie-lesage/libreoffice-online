@@ -1,39 +1,12 @@
-# docker-builder-libreofficeonline
-Make a Docker image to easely build Libreoffice Online
+# Docker image of libreoffice-online
 
-This will proceduce a debian package only.
+Build script to make a LibreOffice Online docker image from public upstream.
 
-## Procedure
 
-1. first git clone libreoffice pocoproject
+## Build
 
 ``` bash
-git clone https://anongit.freedesktop.org/git/libreoffice/online.git
-```
-
-2. checkout a tag version
-
-``` bash
-cd online
-git checkout 3.2.0-4
-```
-
-3. lunch the builder with docker
-
-``` bash
-export CONFIG_OPTIONS="--disable-dependency-tracking --disable-test"
-
-docker run --rm -it -e CONFIG_OPTIONS -v "$PWD:/opt/online" jeci/loolbuilder
-```
-
-This will build lool in your directory and procude 2 debian packages :
-- loolwsd_3.2.0-4_amd64.deb
-- loolwsd-dbgsym_3.2.0-4_amd64.deb
-
-## Build the builder
-
-``` bash
-docker build -t jeci/loolbuilder .
+docker build -t jeci/libreoffice-online --build-arg ONLINE_BRANCH=libreoffice-6-1 .
 docker login
-docker push jeci/loolbuilder
+docker push jeci/libreoffice-online
 ```
