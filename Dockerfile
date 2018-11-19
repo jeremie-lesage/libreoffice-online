@@ -55,7 +55,6 @@ RUN curl -sL ${NODEJS_SETUP_URL} | bash - \
 RUN apt-get install -y \
 			sudo \
 			git \
-			wget \
 			m4 \
 			automake \
 			debhelper \
@@ -87,7 +86,8 @@ RUN git clone --depth 1 --branch $ONLINE_BRANCH ${LOOL_GIT_REP} online
 
 ## 6. Install PO files
 WORKDIR /opt/online/loleaflet/po
-RUN /opt/online/scripts/downloadpootle.sh
+RUN sed -i 's,wget.*https,curl -sSL4 -o $i.zip https,' /opt/online/scripts/downloadpootle.sh \
+	&& /opt/online/scripts/downloadpootle.sh
 
 WORKDIR /opt/online
 ENV INSTDIR="/opt/online/instdir/" \
