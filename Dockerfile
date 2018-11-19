@@ -119,8 +119,8 @@ FROM ubuntu:xenial
 ENV POCO_DEBIAN_REP=https://collaboraoffice.com/repos/Poco/ \
 		LO_MIRROR=http://ftp.free.fr/mirrors/documentfoundation.org \
 		LO_MAJOR=6.1 \
-		LO_MINOR=1 \
-		LO_BUILD=1
+		LO_MINOR=3 \
+		LO_BUILD=2
 
 ## 1. update xenial
 RUN apt-get update \
