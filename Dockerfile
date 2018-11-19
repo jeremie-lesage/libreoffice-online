@@ -15,7 +15,8 @@ FROM ubuntu:xenial as builder
 
 ENV LOOL_GIT_REP=https://anongit.freedesktop.org/git/libreoffice/online.git \
 		POCO_DEBIAN_REP=https://collaboraoffice.com/repos/Poco/ \
-		NODEJS_SETUP_URL=https://deb.nodesource.com/setup_8.x
+		NODEJS_SETUP_URL=https://deb.nodesource.com/setup_8.x \
+		ONLINE_BRANCH=libreoffice-6-1
 
 ## 1. update xenial
 RUN apt-get update \
@@ -24,7 +25,7 @@ RUN apt-get update \
 			apt-transport-https \
 			curl
 
-## 3. set up 3rd party repo of Poco, dependency of loolwsd
+## 2. set up 3rd party repo of Poco, dependency of loolwsd
 RUN echo "deb ${POCO_DEBIAN_REP} /" >> /etc/apt/sources.list.d/poco.list \
 	&& apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 0C54D189F4BA284D \
 	&& apt-get update \
@@ -32,7 +33,7 @@ RUN echo "deb ${POCO_DEBIAN_REP} /" >> /etc/apt/sources.list.d/poco.list \
 			libpoco-dev \
 	&& apt-get auto-remove -y
 
-## 4. install Node.js
+## 3. install Node.js
 WORKDIR /opt/npm
 RUN curl -sL ${NODEJS_SETUP_URL} | bash - \
 		&& apt-get install -y \
@@ -49,7 +50,7 @@ RUN curl -sL ${NODEJS_SETUP_URL} | bash - \
 				popper.js \
 		&& npm install -g jake
 
-## 2. install build dependencies
+## 4. install build dependencies
 RUN apt-get install -y \
 			sudo \
 			git \
@@ -79,9 +80,6 @@ RUN apt-get install -y \
 			unixodbc-dev \
 			fontconfig
 
-
-ARG ONLINE_BRANCH
-
 ## 5. git clone lool
 WORKDIR /opt
 RUN git clone --depth 1 --branch $ONLINE_BRANCH ${LOOL_GIT_REP} online
@@ -107,7 +105,7 @@ ADD patches/ /opt/online/patches/
 RUN  set -e \
 	&& ./patch.sh \
 
-## 8. make && make install
+## 9. make && make install
 RUN  set -e \
 	&& make -j $(expr $(lscpu -p=CPU|tail -1) + 1) \
 	&& DESTDIR="$INSTDIR" make install
