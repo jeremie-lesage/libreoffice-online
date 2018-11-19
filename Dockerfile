@@ -11,7 +11,7 @@
 #####################
 ## STAGE-1 BUILD  ##
 ###################
-FROM ubuntu:xenial as builder
+FROM ubuntu as builder
 
 ENV LOOL_GIT_REP=https://anongit.freedesktop.org/git/libreoffice/online.git \
 		POCO_DEBIAN_REP=https://collaboraoffice.com/repos/Poco/ \
@@ -23,10 +23,11 @@ RUN apt-get update \
 	&& apt-get upgrade -y \
 	&& apt-get install -y \
 			apt-transport-https \
-			curl
+			curl \
+			gnupg
 
 ## 2. set up 3rd party repo of Poco, dependency of loolwsd
-RUN echo "deb ${POCO_DEBIAN_REP} /" >> /etc/apt/sources.list.d/poco.list \
+RUN echo "deb ${POCO_DEBIAN_REP} /" > /etc/apt/sources.list.d/poco.list \
 	&& apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 0C54D189F4BA284D \
 	&& apt-get update \
 	&& apt-get -y install \
@@ -114,7 +115,7 @@ RUN  set -e \
 #####################
 ## STAGE-2 RUN    ##
 ###################
-FROM ubuntu:xenial
+FROM ubuntu
 
 ENV POCO_DEBIAN_REP=https://collaboraoffice.com/repos/Poco/ \
 		LO_MIRROR=http://ftp.free.fr/mirrors/documentfoundation.org \
