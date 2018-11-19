@@ -90,7 +90,7 @@ RUN sed -i 's,wget.*https,curl -sSL4 -o $i.zip https,' /opt/online/scripts/downl
 	&& /opt/online/scripts/downloadpootle.sh
 
 WORKDIR /opt/online
-ENV INSTDIR="/opt/online/instdir/" \
+ENV INSTDIR="/opt/online/instdir" \
 		CONFIG_OPTIONS="--enable-silent-rules --prefix=/usr --localstatedir=/var --sysconfdir=/etc --with-lokit-path=/opt/online/bundled/include"
 #--with-lokit-path="$BUILDDIR"/libreoffice/include
 #--with-lo-path="$INSTDIR"/opt/libreoffice

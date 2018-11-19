@@ -11,45 +11,41 @@ export LC_CTYPE=en_US.UTF-8
 rm /opt/lool/systemplate/etc/resolv.conf
 ln -s /etc/resolv.conf /opt/lool/systemplate/etc/resolv.conf
 
+ETC_DIR=/etc/libreoffice-online/
+
 if test "${DONT_GEN_SSL_CERT-set}" == set; then
 # Generate new SSL certificate instead of using the default
-mkdir -p /opt/ssl/
+mkdir -p /opt/ssl/certs/{ca,servers,tmp}
 cd /opt/ssl/
-mkdir -p certs/ca
 openssl genrsa -out certs/ca/root.key.pem 2048
 openssl req -x509 -new -nodes -key certs/ca/root.key.pem -days 9131 -out certs/ca/root.crt.pem -subj "/C=DE/ST=BW/L=Stuttgart/O=Dummy Authority/CN=Dummy Authority"
-mkdir -p certs/{servers,tmp}
 mkdir -p "certs/servers/localhost"
 openssl genrsa -out "certs/servers/localhost/privkey.pem" 2048 -key "certs/servers/localhost/privkey.pem"
 openssl req -key "certs/servers/localhost/privkey.pem" -new -sha256 -out "certs/tmp/localhost.csr.pem" -subj "/C=DE/ST=BW/L=Stuttgart/O=Dummy Authority/CN=localhost"
 openssl x509 -req -in certs/tmp/localhost.csr.pem -CA certs/ca/root.crt.pem -CAkey certs/ca/root.key.pem -CAcreateserial -out certs/servers/localhost/cert.pem -days 9131
-mv certs/servers/localhost/privkey.pem /etc/loolwsd/key.pem
-mv certs/servers/localhost/cert.pem /etc/loolwsd/cert.pem
-mv certs/ca/root.crt.pem /etc/loolwsd/ca-chain.cert.pem
+mv certs/servers/localhost/privkey.pem ${ETC_DIR}/key.pem
+mv certs/servers/localhost/cert.pem ${ETC_DIR}/cert.pem
+mv certs/ca/root.crt.pem ${ETC_DIR}/ca-chain.cert.pem
 fi
 
-chown lool -R /etc/loolwsd
+chown lool -R ${ETC_DIR}
 
 # Replace trusted host
-perl -pi -e "s/localhost<\/host>/${domain}<\/host>/g" /etc/loolwsd/loolwsd.xml
-perl -pi -e "s/<username desc=\"The username of the admin console. Must be set.\"><\/username>/<username desc=\"The username of the admin console. Must be set.\">${username}<\/username>/" /etc/loolwsd/loolwsd.xml
-perl -pi -e "s/<password desc=\"The password of the admin console. Must be set.\"><\/password>/<password desc=\"The password of the admin console. Must be set.\">${password}<\/password>/g" /etc/loolwsd/loolwsd.xml
+sed -i "s,localhost</host>,${domain}</host>,g" ${ETC_DIR}/loolwsd.xml
+sed -i "s,<username .*></username>,<username>${username}</username>," ${ETC_DIR}/loolwsd.xml
+sed -i "s,<password .*></password>,<password>${password}</password>,g" ${ETC_DIR}/loolwsd.xml
 
-perl -pi -e "s/true<\/seccomp>/false<\/seccomp>/g" /etc/loolwsd/loolwsd.xml
-perl -pi -e "s/localhost:9042\/foo<\/monitor>/loolmonitor:8765<\/monitor>/g" /etc/loolwsd/loolwsd.xml
-
-#rm -rf /usr/lib/python3.6/venv/
+sed -i "s,true</seccomp>,false</seccomp>,g" ${ETC_DIR}/loolwsd.xml
+sed -i "s,localhost:9042/foo</monitor>,loolmonitor:8765</monitor>,g" ${ETC_DIR}/loolwsd.xml
 
 
 # Start loolwsd
 LOOL_PARAM="--version"
 LOOL_PARAM="${LOOL_PARAM} "
 LOOL_PARAM="${LOOL_PARAM} --o:sys_template_path=/opt/lool/systemplate "
-LOOL_PARAM="${LOOL_PARAM} --o:lo_template_path=/opt/libreofficedev6.1 "
+LOOL_PARAM="${LOOL_PARAM} --o:lo_template_path=/opt/libreoffice "
 LOOL_PARAM="${LOOL_PARAM} --o:child_root_path=/opt/lool/child-roots "
 LOOL_PARAM="${LOOL_PARAM} --o:file_server_root_path=/usr/share/loolwsd "
 #export FONTCONFIG_FILE=/etc/fonts/fonts.conf
 #export FONTCONFIG_PATH=/etc/fonts/
 su -c "/usr/bin/loolwsd ${LOOL_PARAM}" -s /bin/bash lool
-
-#apt-get install python3-virtualenv
