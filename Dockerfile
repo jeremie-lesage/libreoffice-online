@@ -95,6 +95,10 @@ RUN set -xe \
 		cpio \
 		poco-net \
 		poco-netssl \
+		dbus-glib \
+		cairo \
+		cups-libs \
+		libSM \
 	&& curl ${LO_MIRROR}/libreoffice/${LO_RELEASE}/${LO_MAJOR}.${LO_MINOR}/rpm/x86_64/${LO_TAR_FILENAME} \
 					-o /opt/${LO_TAR_FILENAME} \
 	&& tar xzf /opt/${LO_TAR_FILENAME} -C /opt \
