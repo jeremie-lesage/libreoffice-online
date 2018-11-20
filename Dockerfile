@@ -1,7 +1,4 @@
-FROM fedora:29 as base
-
-#RUN yum install epel-release &&
-#		yum update -y
+FROM docker.io/fedora:29 as base
 
 ENV LO_MIRROR=http://ftp.free.fr/mirrors/documentfoundation.org \
 		LO_RELEASE=stable \
@@ -89,8 +86,6 @@ FROM base
 
 LABEL maintainer="https://jeci.fr/"
 LABEL RUN='docker run -d -p 9980:9980 $IMAGE'
-
-#RUN yum install -y yum-plugin-fastestmirror
 
 ENV LO_TAR_FILENAME=LibreOffice_${LO_MAJOR}.${LO_MINOR}_Linux_x86-64_rpm.tar.gz
 
