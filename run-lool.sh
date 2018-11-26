@@ -35,4 +35,5 @@ LOOL_PARAM="${LOOL_PARAM} --o:child_root_path=/opt/lool/child-roots "
 LOOL_PARAM="${LOOL_PARAM} --o:file_server_root_path=/usr/share/libreoffice-online "
 #export FONTCONFIG_FILE=/etc/fonts/fonts.conf
 #export FONTCONFIG_PATH=/etc/fonts/
-su -c "/usr/bin/loolwsd ${LOOL_PARAM}" -s /bin/bash lool
+
+exec /usr/bin/loolwsd ${LOOL_PARAM}
