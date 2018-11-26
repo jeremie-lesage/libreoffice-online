@@ -7,7 +7,8 @@ ENV LO_MIRROR=http://ftp.free.fr/mirrors/documentfoundation.org \
 		LO_RELEASE=stable \
 		LO_MAJOR=6.1 \
 		LO_MINOR=3 \
-		LO_BUILD=2
+		LO_BUILD=2 \
+		LO_BASENAME=LibreOffice
 
 ENV LOOL_GIT_REP=https://anongit.freedesktop.org/git/libreoffice/online.git \
 		ONLINE_BRANCH=libreoffice-6.1.3.2
@@ -92,7 +93,7 @@ LABEL RUN='docker run -d -p 9980:9980 $IMAGE'
 
 #RUN yum install -y yum-plugin-fastestmirror
 
-ENV LO_TAR_FILENAME=LibreOffice_${LO_MAJOR}.${LO_MINOR}_Linux_x86-64_rpm.tar.gz
+ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}_Linux_x86-64_rpm.tar.gz
 
 ## 2. Install LibreOffice from public mirror (to match with Lool version)
 RUN set -xe \
@@ -109,8 +110,8 @@ RUN set -xe \
 					-o /opt/${LO_TAR_FILENAME} \
 	&& tar xzf /opt/${LO_TAR_FILENAME} -C /opt \
 	&& yum install -y \
-		/opt/LibreOffice_${LO_MAJOR}.${LO_MINOR}.${LO_BUILD}_Linux_x86-64_rpm/RPMS/*rpm \
-	&& rm -rf /opt/LibreOffice_* \
+		/opt/${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}.${LO_BUILD}_Linux_x86-64_rpm/RPMS/*rpm \
+	&& rm -rf /opt/${LO_BASENAME}_* \
 	&& yum clean all
 
 ## 3. copy freshly built LibreOffice Online
