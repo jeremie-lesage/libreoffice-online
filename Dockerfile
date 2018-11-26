@@ -1,20 +1,20 @@
 FROM fedora:29 as base
 
 ENV LO_MIRROR=http://ftp.free.fr/mirrors/documentfoundation.org \
-		LO_RELEASE=testing \
-		LO_MAJOR=6.2 \
-		LO_MINOR=0 \
-		LO_BUILD=0.beta1 \
-		LO_BASENAME=LibreOfficeDev
+		LO_RELEASE=stable \
+		LO_MAJOR=6.1 \
+		LO_MINOR=3 \
+		LO_BUILD=2 \
+		LO_BASENAME=LibreOffice
 
 # pattern stable
-#ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}_Linux_x86-64_rpm.tar.gz
+ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}_Linux_x86-64_rpm.tar.gz
 
 # pattern testing
-ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}.${LO_BUILD}_Linux_x86-64_rpm.tar.gz
+# ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}.${LO_BUILD}_Linux_x86-64_rpm.tar.gz
 
 ENV LOOL_GIT_REP=https://anongit.freedesktop.org/git/libreoffice/online.git \
-		ONLINE_BRANCH=libreoffice-6.2.0.0.beta1
+		ONLINE_BRANCH=libreoffice-6.1.3.2
 
 #RUN yum install -y yum-plugin-fastestmirror
 
