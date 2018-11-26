@@ -4,14 +4,14 @@ FROM fedora:29 as base
 #		yum update -y
 
 ENV LO_MIRROR=http://ftp.free.fr/mirrors/documentfoundation.org \
-		LO_RELEASE=stable \
-		LO_MAJOR=6.1 \
-		LO_MINOR=3 \
-		LO_BUILD=2 \
-		LO_BASENAME=LibreOffice
+		LO_RELEASE=testing \
+		LO_MAJOR=6.2 \
+		LO_MINOR=0 \
+		LO_BUILD=0.beta1 \
+		LO_BASENAME=LibreOfficeDev
 
 ENV LOOL_GIT_REP=https://anongit.freedesktop.org/git/libreoffice/online.git \
-		ONLINE_BRANCH=libreoffice-6.1.3.2
+		ONLINE_BRANCH=libreoffice-6.2.0.0.beta1
 
 #RUN yum install -y yum-plugin-fastestmirror
 
@@ -93,18 +93,24 @@ LABEL RUN='docker run -d -p 9980:9980 $IMAGE'
 
 #RUN yum install -y yum-plugin-fastestmirror
 
-ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}_Linux_x86-64_rpm.tar.gz
-
-## 2. Install LibreOffice from public mirror (to match with Lool version)
+## 1. run dependencies
 RUN set -xe \
 	&& yum install -y \
 		cairo \
 		cpio \
-		dbus-glib \
 		cups-libs \
+		dbus-glib \
+		findutils \
 		libSM \
+		libXinerama \
 		poco-net \
 		poco-netssl \
+		which \
+	&& yum clean all
+
+ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}.${LO_BUILD}_Linux_x86-64_rpm.tar.gz
+## 2. Install LibreOffice from public mirror (to match with Lool version)
+RUN set -xe \
 	&& curl -sSL \
 					${LO_MIRROR}/libreoffice/${LO_RELEASE}/${LO_MAJOR}.${LO_MINOR}/rpm/x86_64/${LO_TAR_FILENAME} \
 					-o /opt/${LO_TAR_FILENAME} \
@@ -126,12 +132,17 @@ RUN set -ex \
 				/var/cache/libreoffice-online \
 				/opt/lool \
 				/opt/lool/child-roots \
-	&& su lool --shell=/bin/sh \
-			-c "loolwsd-systemplate-setup /opt/lool/systemplate /opt/libreoffice${LO_MAJOR} "
+				/opt/lool/systemplate \
+	&& chown -R lool: /opt/lool
 
 ## 5. copy the shell script which can start LibreOffice Online (loolwsd)
 ADD run-lool.sh /
-RUN sed -i "s,lo_template_path=.*,lo_template_path=/opt/libreoffice${LO_MAJOR} \"," /run-lool.sh
+RUN sed -i "s,lo_template_path=.*,lo_template_path=/opt/${LO_BASENAME,,}${LO_MAJOR} \"," /run-lool.sh
+
+## 6. setup as user "lool"
+USER lool
+RUN set -ex \
+	&& loolwsd-systemplate-setup /opt/lool/systemplate /opt/${LO_BASENAME,,}${LO_MAJOR}
 
 EXPOSE 9980
 
