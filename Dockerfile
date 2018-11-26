@@ -128,15 +128,17 @@ COPY --from=builder /opt/online/instdir/ /opt/lool/systemplate/
 RUN set -ex \
 	&& setcap cap_fowner,cap_mknod,cap_sys_chroot+iep /usr/bin/loolforkit \
 	&& adduser -m --system lool \
-	&& install -o lool -d \
+	&& mkdir -p \
+				/opt/lool/{child-roots,systemplate} \
 				/var/cache/libreoffice-online \
+				/etc/libreoffice-online \
+	&& chown -R lool: \
 				/opt/lool \
-				/opt/lool/child-roots \
-				/opt/lool/systemplate \
-	&& chown -R lool: /opt/lool
+				/var/cache/libreoffice-online \
+				/etc/libreoffice-online
 
 ## 5. copy the shell script which can start LibreOffice Online (loolwsd)
-ADD run-lool.sh /
+ADD *.sh /
 RUN sed -i "s,lo_template_path=.*,lo_template_path=/opt/${LO_BASENAME,,}${LO_MAJOR} \"," /run-lool.sh
 
 ## 6. setup as user "lool"
