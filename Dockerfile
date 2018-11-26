@@ -75,7 +75,7 @@ RUN sed -i 's/Werror/Wno-error/g' config.status \
 ADD patch.sh /opt/online/
 ADD patches/ /opt/online/patches/
 RUN  set -e \
-	&& ./patch.sh \
+	&& ./patch.sh
 
 ## 9. build and install
 RUN  set -e \
@@ -97,10 +97,15 @@ ENV LO_TAR_FILENAME=LibreOffice_${LO_MAJOR}.${LO_MINOR}_Linux_x86-64_rpm.tar.gz
 ## 2. Install LibreOffice from public mirror (to match with Lool version)
 RUN set -xe \
 	&& yum install -y \
+		cairo \
 		cpio \
+		dbus-glib \
+		cups-libs \
+		libSM \
 		poco-net \
 		poco-netssl \
-	&& curl ${LO_MIRROR}/libreoffice/${LO_RELEASE}/${LO_MAJOR}.${LO_MINOR}/rpm/x86_64/${LO_TAR_FILENAME} \
+	&& curl -sSL \
+					${LO_MIRROR}/libreoffice/${LO_RELEASE}/${LO_MAJOR}.${LO_MINOR}/rpm/x86_64/${LO_TAR_FILENAME} \
 					-o /opt/${LO_TAR_FILENAME} \
 	&& tar xzf /opt/${LO_TAR_FILENAME} -C /opt \
 	&& yum install -y \
