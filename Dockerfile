@@ -1,27 +1,7 @@
-FROM fedora:29 as base
-
-ENV LO_MIRROR=http://ftp.free.fr/mirrors/documentfoundation.org \
-		LO_RELEASE=testing \
-		LO_MAJOR=6.2 \
-		LO_MINOR=0 \
-		LO_BUILD=0.beta1 \
-		LO_BASENAME=LibreOfficeDev
-
-# pattern stable
-#ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}_Linux_x86-64_rpm.tar.gz
-
-# pattern testing
-ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}.${LO_BUILD}_Linux_x86-64_rpm.tar.gz
-
-ENV LOOL_GIT_REP=https://anongit.freedesktop.org/git/libreoffice/online.git \
-		ONLINE_BRANCH=libreoffice-6.2.0.0.beta1
-
-#RUN yum install -y yum-plugin-fastestmirror
-
 #####################
 ## STAGE-1 BUILD  ##
 ###################
-FROM base as builder
+FROM fedora:29 as builder
 
 ## 1. Dev tools
 RUN yum group install -y "Development Tools"
@@ -43,6 +23,10 @@ RUN yum install -y \
 			pcre-devel \
 			poco-devel \
 			python3-polib
+
+
+ENV LOOL_GIT_REP=https://anongit.freedesktop.org/git/libreoffice/online.git \
+		ONLINE_BRANCH=libreoffice-6.2.0.2
 
 ## 3. Clone LibreOffice Online
 WORKDIR /opt
@@ -89,7 +73,7 @@ RUN  set -e \
 #####################
 ## STAGE-2 RUN    ##
 ###################
-FROM base
+FROM fedora:29
 
 LABEL maintainer="https://jeci.fr/"
 LABEL RUN='docker run -d -p 9980:9980 $IMAGE'
@@ -108,6 +92,19 @@ RUN set -xe \
 		poco-netssl \
 		which \
 	&& yum clean all
+
+ENV LO_MIRROR=http://ftp.free.fr/mirrors/documentfoundation.org \
+		LO_RELEASE=testing \
+		LO_MAJOR=6.2 \
+		LO_MINOR=0 \
+		LO_BUILD=2 \
+		LO_BASENAME=LibreOffice
+
+# pattern stable
+#ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}_Linux_x86-64_rpm.tar.gz
+
+# pattern testing
+ENV LO_TAR_FILENAME=${LO_BASENAME}_${LO_MAJOR}.${LO_MINOR}.${LO_BUILD}_Linux_x86-64_rpm.tar.gz
 
 ## 2. Install LibreOffice from public mirror (to match with Lool version)
 RUN set -xe \
